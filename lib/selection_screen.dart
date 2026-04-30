@@ -3,7 +3,7 @@ import 'login_screen.dart';
 import 'login_jefe_screen.dart';
 
 class SelectionScreen extends StatelessWidget {
-  final Function(String, String) onLogin; // Para pasar nombre y rol al main
+  final Function(String, String) onLogin; // Para pjkhwbdbwqdhnxwqasar nombre y rol al main
 
   const SelectionScreen({super.key, required this.onLogin});
 
