@@ -91,6 +91,7 @@ class DashboardJefeScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(15),
+}
       ),
       child: Row(
         children: [

@@ -128,7 +128,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
           try {
             await _initializeControllerFuture;
             
-            // 1. Capturamos la foto física (archivo temporal) Version 1
+            // 1. Capturamos la foto física (archivo temporal)
             final image = await _controller.takePicture();
             
             // 2. Procesamos el texto con ML Kit
