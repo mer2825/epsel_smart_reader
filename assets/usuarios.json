@@ -1,0 +1,16 @@
+{
+  "usuarios": [
+    {
+      "id": 1,
+      "nombre": "Mercedes Hoyos",
+      "correo": "mer28@epsel.com.pe",
+      "pass": "admin123"
+    },
+    {
+      "id": 2,
+      "nombre": "usuario",
+      "correo": "usuario@epsel.com.pe",
+      "pass": "admin123"
+    }
+  ]
+}
