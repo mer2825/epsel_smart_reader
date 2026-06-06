@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+// import '../services/firebase_service.dart'; // Comentado temporalmente
+// import '../models/usuario.dart'; // Comentado temporalmente
 
 class LoginJefeScreen extends StatefulWidget {
-  final Function(String) onLoginSuccess;
+  final Function(String, String) onLoginSuccess; // Espera nombre y rol
   const LoginJefeScreen({super.key, required this.onLoginSuccess});
 
   @override
@@ -11,6 +13,35 @@ class LoginJefeScreen extends StatefulWidget {
 class _LoginJefeScreenState extends State<LoginJefeScreen> {
   final TextEditingController _userController = TextEditingController();
   final TextEditingController _passController = TextEditingController();
+  // final FirebaseService _firebaseService = FirebaseService(); // Comentado temporalmente
+  bool _isLoading = false;
+
+  Future<void> _handleLogin() async {
+    setState(() { _isLoading = true; });
+    
+    // --- SIMULACIÓN DE LOGIN DE JEFE ---
+    await Future.delayed(const Duration(seconds: 1)); // Simula red
+
+    final dniStr = _userController.text.trim();
+    
+    if (dniStr == 'admin') {
+      widget.onLoginSuccess("Jefe de Zona", "jefe");
+      
+      // ¡SOLUCIÓN! Cierra la pantalla de login después del éxito.
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Usuario incorrecto (Prueba con "admin")'), backgroundColor: Colors.red),
+        );
+      }
+    }
+    // --- FIN DE SIMULACIÓN ---
+
+    if (mounted) setState(() { _isLoading = false; });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +58,6 @@ class _LoginJefeScreenState extends State<LoginJefeScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // LOGO EPSEL CON BORDE DORADO
             Container(
               padding: const EdgeInsets.all(4),
               decoration: const BoxDecoration(
@@ -52,15 +82,17 @@ class _LoginJefeScreenState extends State<LoginJefeScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 40),
               child: Column(
                 children: [
-                  _buildAdminField(_userController, 'Usuario Administrador', Icons.admin_panel_settings),
+                  _buildAdminField(_userController, 'Usuario (admin)', Icons.admin_panel_settings),
                   const SizedBox(height: 20),
-                  _buildAdminField(_passController, 'Contraseña Privada', Icons.lock_outline, isPass: true),
+                  _buildAdminField(_passController, 'Contraseña', Icons.lock_outline, isPass: true),
                   const SizedBox(height: 40),
-                  SizedBox(
+                  _isLoading
+                  ? const CircularProgressIndicator(color: Color(0xFFFFD700))
+                  : SizedBox(
                     width: double.infinity,
                     height: 55,
                     child: ElevatedButton(
-                      onPressed: () => widget.onLoginSuccess(_userController.text),
+                      onPressed: _handleLogin,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFFFD700),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
@@ -82,6 +114,7 @@ class _LoginJefeScreenState extends State<LoginJefeScreen> {
       controller: controller,
       obscureText: isPass,
       style: const TextStyle(color: Colors.white),
+      keyboardType: isPass ? TextInputType.text : TextInputType.text, // Cambiado para admitir "admin"
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(color: Colors.white54),

@@ -3,7 +3,7 @@ import 'login_screen.dart';
 import 'login_jefe_screen.dart';
 
 class SelectionScreen extends StatelessWidget {
-  final Function(String, String) onLogin; // Para pjkhwbdbwqdhnxwqasar nombre y rol al main
+  final Function(String, String) onLogin; // Para pasar nombre y rol al main
 
   const SelectionScreen({super.key, required this.onLogin});
 
@@ -42,7 +42,11 @@ class SelectionScreen extends StatelessWidget {
               textColor: const Color(0xFF005696),
               onTap: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => LoginScreen(onLoginSuccess: (nombre) => onLogin(nombre, "trabajador"))),
+                MaterialPageRoute(
+                  builder: (context) => LoginScreen(
+                    onLoginSuccess: (nombre, rol) => onLogin(nombre, rol),
+                  ),
+                ),
               ),
             ),
 
@@ -57,7 +61,11 @@ class SelectionScreen extends StatelessWidget {
               textColor: const Color(0xFF002B49),
               onTap: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => LoginJefeScreen(onLoginSuccess: (nombre) => onLogin(nombre, "jefe"))),
+                MaterialPageRoute(
+                  builder: (context) => LoginJefeScreen(
+                    onLoginSuccess: (nombre, rol) => onLogin(nombre, rol),
+                  ),
+                ),
               ),
             ),
           ],

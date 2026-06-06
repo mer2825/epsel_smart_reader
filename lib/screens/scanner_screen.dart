@@ -48,7 +48,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context), 
+            onPressed: () => Navigator.pop(context),
             child: const Text('REINTENTAR', style: TextStyle(color: Colors.grey))
           ),
           ElevatedButton(
@@ -58,7 +58,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
             ),
             onPressed: () {
               Navigator.pop(context); // Cierra el diálogo
-              
+
               // RETORNO DE DATOS: Mandamos el Mapa a la pantalla anterior
               Navigator.pop(context, {
                 'lectura': valor,
@@ -127,17 +127,17 @@ class _ScannerScreenState extends State<ScannerScreen> {
         onPressed: () async {
           try {
             await _initializeControllerFuture;
-            
+
             // 1. Capturamos la foto física (archivo temporal)
             final image = await _controller.takePicture();
-            
+
             // 2. Procesamos el texto con ML Kit
             final inputImage = InputImage.fromFilePath(image.path);
             final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
             final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
-            
+
             String mejorLectura = "";
-            
+
             for (TextBlock block in recognizedText.blocks) {
               for (TextLine line in block.lines) {
                 // Filtramos solo números
@@ -164,11 +164,11 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 );
               }
             }
-          } catch (e) { 
-            print("Error en captura: $e"); 
+          } catch (e) {
+            print("Error en captura: $e");
           }
         },
-        label: const Text("CAPTURAR LECTURA", 
+        label: const Text("CAPTURAR LECTURA",
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         icon: const Icon(Icons.camera_alt, color: Colors.white),
       ),

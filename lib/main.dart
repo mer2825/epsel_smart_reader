@@ -1,16 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import 'scanner_screen.dart'; 
-import 'login_screen.dart'; 
-import 'login_jefe_screen.dart';
-import 'historial_lectura_screen.dart';
-import 'perfil_screen.dart';
-import 'selection_screen.dart';
-import 'dashboard_jefe_screen.dart';
-// import 'dashboard_jefe_screen.dart'; // Importar cuando crees el archivo de gráficas
+import 'package:firebase_core/firebase_core.dart';
+import 'screens/scanner_screen.dart'; 
+import 'screens/login_screen.dart'; 
+import 'screens/login_jefe_screen.dart';
+import 'screens/historial_lectura_screen.dart';
+import 'screens/perfil_screen.dart';
+import 'screens/selection_screen.dart';
+import 'screens/dashboard_jefe_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();  
+  
+  try {
+    // Intentamos inicializar Firebase, pero no haremos que la app falle si no puede.
+    await Firebase.initializeApp();
+  } catch (e) {
+    print("Firebase initialization failed: $e");
+    // La app continuará ejecutándose incluso si Firebase no está configurado.
+  }
+  
   final cameras = await availableCameras();
   final firstCamera = cameras.first;
 
@@ -57,10 +66,9 @@ class _MyAppState extends State<MyApp> {
         primaryColor: const Color(0xFF005696),
         useMaterial3: true,
       ),
-      // Dentro del build de MaterialApp
       home: _isLoggedIn 
           ? (_rolActual == "jefe" 
-              ? DashboardJefeScreen(onLogout: _handleLogout) // <--- Cambio realizado
+              ? DashboardJefeScreen(onLogout: _handleLogout)
               : HomePage(
                   camera: widget.camera, 
                   nombreUsuario: _usuarioActual, 

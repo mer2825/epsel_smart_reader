@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:flutter/services.dart';
+// import '../services/firebase_service.dart'; // Comentado temporalmente
+// import '../models/usuario.dart'; // Comentado temporalmente
 
 class LoginScreen extends StatefulWidget {
-  final Function(String) onLoginSuccess;
+  final Function(String, String) onLoginSuccess; // Mantenemos la firma
   const LoginScreen({super.key, required this.onLoginSuccess});
 
   @override
@@ -11,46 +11,41 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController();
+  final _usuarioController = TextEditingController();
   final _passController = TextEditingController();
+  // final _firebaseService = FirebaseService(); // Comentado temporalmente
+
   bool _isLoading = false;
-  bool _obscureText = true; // Controla si se ve la clave o no
+  bool _obscureText = true;
 
   Future<void> _handleLogin() async {
     setState(() { _isLoading = true; });
-    try {
-      final String response = await rootBundle.loadString('assets/usuarios.json');
-      final data = await json.decode(response);
-      final List users = data['usuarios'];
+    
+    // --- SIMULACIÓN DE LOGIN ---
+    await Future.delayed(const Duration(seconds: 1)); // Simula espera de red
+    
+    final dniStr = _usuarioController.text.trim();
 
-      bool encontrado = false;
-      String nombreTecnico = "";
-
-      for (var user in users) {
-        if (user['correo'] == _emailController.text.trim() && 
-            user['pass'] == _passController.text.trim()) {
-          encontrado = true;
-          nombreTecnico = user['nombre'];
-          break;
-        }
+    if (dniStr == '123') {
+      // Login simulado exitoso
+      widget.onLoginSuccess("Usuario de Prueba", "trabajador");
+      
+      // ¡SOLUCIÓN! Cierra la pantalla de login después del éxito.
+      if (mounted) {
+        Navigator.pop(context);
       }
 
-      await Future.delayed(const Duration(milliseconds: 500));
-
-      if (encontrado) {
-        widget.onLoginSuccess(nombreTecnico);
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Credenciales incorrectas'), backgroundColor: Colors.red),
-          );
-        }
+    } else {
+      // Login simulado fallido
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Usuario no encontrado (Prueba con DNI "123")'), backgroundColor: Colors.red),
+        );
       }
-    } catch (e) {
-      print("Error: $e");
-    } finally {
-      if (mounted) setState(() { _isLoading = false; });
     }
+    // --- FIN DE LA SIMULACIÓN ---
+
+    if (mounted) setState(() { _isLoading = false; });
   }
 
   @override
@@ -100,11 +95,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.black)),
                       const SizedBox(height: 30),
 
-                      // INPUT USUARIO
+                      // INPUT USUARIO (DNI)
                       TextField(
-                        controller: _emailController,
+                        controller: _usuarioController,
+                        keyboardType: TextInputType.number,
                         decoration: InputDecoration(
-                          hintText: 'Ingrese usuario',
+                          hintText: 'Ingrese usuario (DNI)',
                           prefixIcon: const Icon(Icons.account_circle_outlined, color: Color(0xFF005696), size: 30),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
                         ),
