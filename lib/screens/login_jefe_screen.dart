@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-// import '../services/firebase_service.dart'; // Comentado temporalmente
-// import '../models/usuario.dart'; // Comentado temporalmente
+import 'package:firebase_auth/firebase_auth.dart';
+import '../services/firebase_service.dart';
+import '../models/usuario.dart';
 
 class LoginJefeScreen extends StatefulWidget {
-  final Function(String, String) onLoginSuccess; // Espera nombre y rol
+  final Function(String, String) onLoginSuccess;
   const LoginJefeScreen({super.key, required this.onLoginSuccess});
 
   @override
@@ -11,34 +12,61 @@ class LoginJefeScreen extends StatefulWidget {
 }
 
 class _LoginJefeScreenState extends State<LoginJefeScreen> {
-  final TextEditingController _userController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passController = TextEditingController();
-  // final FirebaseService _firebaseService = FirebaseService(); // Comentado temporalmente
+  final FirebaseService _firebaseService = FirebaseService();
   bool _isLoading = false;
 
   Future<void> _handleLogin() async {
     setState(() { _isLoading = true; });
-    
-    // --- SIMULACIÓN DE LOGIN DE JEFE ---
-    await Future.delayed(const Duration(seconds: 1)); // Simula red
 
-    final dniStr = _userController.text.trim();
-    
-    if (dniStr == 'admin') {
-      widget.onLoginSuccess("Jefe de Zona", "jefe");
-      
-      // ¡SOLUCIÓN! Cierra la pantalla de login después del éxito.
+    final email = _emailController.text.trim();
+    final password = _passController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
       if (mounted) {
-        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Por favor, ingrese correo y contraseña'), backgroundColor: Colors.orange),
+        );
+      }
+      setState(() { _isLoading = false; });
+      return;
+    }
+
+    // --- LÓGICA REAL DE FIREBASE AUTH ---
+    final User? user = await _firebaseService.signInWithEmailAndPassword(email, password);
+
+    if (user != null) {
+      final Usuario? usuarioData = await _firebaseService.getUsuarioPorUid(user.uid);
+
+      if (usuarioData != null) {
+        // VERIFICAMOS QUE EL ROL SEA 'JEFE'
+        if (usuarioData.rol == 'jefe') {
+          widget.onLoginSuccess("${usuarioData.nombres} ${usuarioData.apellidos}", usuarioData.rol);
+        } else {
+          // Si el usuario no es jefe, mostramos error y cerramos sesión
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Acceso denegado. No tienes rol de Jefe.'), backgroundColor: Colors.red),
+            );
+          }
+          await _firebaseService.signOut();
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Error: Datos de usuario no encontrados'), backgroundColor: Colors.red),
+          );
+        }
+        await _firebaseService.signOut();
       }
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Usuario incorrecto (Prueba con "admin")'), backgroundColor: Colors.red),
+          const SnackBar(content: Text('Correo o contraseña incorrectos'), backgroundColor: Colors.red),
         );
       }
     }
-    // --- FIN DE SIMULACIÓN ---
 
     if (mounted) setState(() { _isLoading = false; });
   }
@@ -82,7 +110,7 @@ class _LoginJefeScreenState extends State<LoginJefeScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 40),
               child: Column(
                 children: [
-                  _buildAdminField(_userController, 'Usuario (admin)', Icons.admin_panel_settings),
+                  _buildAdminField(_emailController, 'Correo electrónico', Icons.email_outlined),
                   const SizedBox(height: 20),
                   _buildAdminField(_passController, 'Contraseña', Icons.lock_outline, isPass: true),
                   const SizedBox(height: 40),
@@ -114,7 +142,7 @@ class _LoginJefeScreenState extends State<LoginJefeScreen> {
       controller: controller,
       obscureText: isPass,
       style: const TextStyle(color: Colors.white),
-      keyboardType: isPass ? TextInputType.text : TextInputType.text, // Cambiado para admitir "admin"
+      keyboardType: isPass ? TextInputType.visiblePassword : TextInputType.emailAddress,
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(color: Colors.white54),

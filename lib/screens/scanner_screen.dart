@@ -1,10 +1,20 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import '../services/firebase_service.dart';
 
 class ScannerScreen extends StatefulWidget {
   final CameraDescription camera;
-  const ScannerScreen({super.key, required this.camera});
+  final String idRuta;
+  final String codigoSuministro;
+
+  const ScannerScreen({
+    super.key, 
+    required this.camera,
+    required this.idRuta,
+    required this.codigoSuministro,
+  });
 
   @override
   State<ScannerScreen> createState() => _ScannerScreenState();
@@ -13,11 +23,12 @@ class ScannerScreen extends StatefulWidget {
 class _ScannerScreenState extends State<ScannerScreen> {
   late CameraController _controller;
   late Future<void> _initializeControllerFuture;
+  final FirebaseService _firebaseService = FirebaseService();
+  bool _isProcessing = false;
 
   @override
   void initState() {
     super.initState();
-    // Resolución medium es ideal para el enfoque de medidores
     _controller = CameraController(widget.camera, ResolutionPreset.medium, enableAudio: false);
     _initializeControllerFuture = _controller.initialize();
   }
@@ -28,7 +39,27 @@ class _ScannerScreenState extends State<ScannerScreen> {
     super.dispose();
   }
 
-  // MODIFICADO: Envía el número y la foto de regreso a la Hoja de Lectura
+  // --- FUNCIÓN DE GUARDADO SIMULADA ---
+  Future<void> _procesarYGuardarLectura(String lectura, String fotoPath) async {
+    setState(() { _isProcessing = true; });
+
+    // Simulamos una espera de red
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Lectura guardada con éxito (Simulación)"),
+          backgroundColor: Colors.green,
+        ),
+      );
+      // Volvemos a la pantalla anterior
+      Navigator.pop(context);
+    }
+    
+    setState(() { _isProcessing = false; });
+  }
+
   void _mostrarResultado(String valor, String pathImagen) {
     showDialog(
       context: context,
@@ -57,13 +88,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
             ),
             onPressed: () {
-              Navigator.pop(context); // Cierra el diálogo
-
-              // RETORNO DE DATOS: Mandamos el Mapa a la pantalla anterior
-              Navigator.pop(context, {
-                'lectura': valor,
-                'fotoPath': pathImagen
-              });
+              Navigator.pop(context);
+              _procesarYGuardarLectura(valor, pathImagen);
             },
             child: const Text('CONFIRMAR', style: TextStyle(color: Colors.white)),
           ),
@@ -87,7 +113,6 @@ class _ScannerScreenState extends State<ScannerScreen> {
             return Stack(
               children: [
                 CameraPreview(_controller),
-                // Visor estilo Figma (Marco de enfoque)
                 Center(
                   child: Container(
                     width: 320,
@@ -95,26 +120,23 @@ class _ScannerScreenState extends State<ScannerScreen> {
                     decoration: BoxDecoration(
                       border: Border.all(color: Colors.cyanAccent, width: 3),
                       borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.3),
-                          blurRadius: 10,
-                          spreadRadius: 2
-                        )
-                      ],
                     ),
                   ),
                 ),
-                const Positioned(
-                  bottom: 150,
-                  left: 0,
-                  right: 0,
-                  child: Text(
-                    "Encuadre los números del medidor aquí",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white, backgroundColor: Colors.black45),
+                if (_isProcessing)
+                  Container(
+                    color: Colors.black.withOpacity(0.5),
+                    child: const Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 15),
+                          Text("Guardando lectura...", style: TextStyle(color: Colors.white)),
+                        ],
+                      ),
+                    ),
                   ),
-                )
               ],
             );
           } else {
@@ -124,36 +146,27 @@ class _ScannerScreenState extends State<ScannerScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: const Color(0xFF005696),
-        onPressed: () async {
+        onPressed: _isProcessing ? null : () async {
           try {
             await _initializeControllerFuture;
-
-            // 1. Capturamos la foto física (archivo temporal)
             final image = await _controller.takePicture();
-
-            // 2. Procesamos el texto con ML Kit
             final inputImage = InputImage.fromFilePath(image.path);
             final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
             final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
+            textRecognizer.close();
 
             String mejorLectura = "";
-
             for (TextBlock block in recognizedText.blocks) {
               for (TextLine line in block.lines) {
-                // Filtramos solo números
                 String soloNumeros = line.text.replaceAll(RegExp(r'[^0-9]'), '');
-                // Validamos longitud típica de medidores (ej. 4 a 8 dígitos)
                 if (soloNumeros.length >= 3 && soloNumeros.length <= 8) {
                   mejorLectura = soloNumeros;
                 }
               }
             }
 
-            textRecognizer.close();
-
             if (context.mounted) {
               if (mejorLectura.isNotEmpty) {
-                // ÉXITO: Mostramos diálogo y enviamos ruta de la imagen
                 _mostrarResultado(mejorLectura, image.path);
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(

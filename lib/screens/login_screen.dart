@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:connectivity_plus/connectivity_plus.dart'; // Importamos el paquete
 import '../services/firebase_service.dart';
 import '../models/usuario.dart';
 
@@ -12,7 +13,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController(); // Cambiado de _usuarioController
+  final _emailController = TextEditingController();
   final _passController = TextEditingController();
   final _firebaseService = FirebaseService();
 
@@ -21,6 +22,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handleLogin() async {
     setState(() { _isLoading = true; });
+
+    // --- VERIFICACIÓN DE CONEXIÓN A INTERNET ---
+    final connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.none) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No hay conexión a internet'), backgroundColor: Colors.red),
+        );
+      }
+      setState(() { _isLoading = false; });
+      return;
+    }
+    // --- FIN DE LA VERIFICACIÓN ---
 
     final email = _emailController.text.trim();
     final password = _passController.text.trim();
@@ -35,38 +49,32 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    // --- LÓGICA REAL DE FIREBASE AUTH ---
     final User? user = await _firebaseService.signInWithEmailAndPassword(email, password);
 
     if (user != null) {
-      // Si la autenticación es exitosa, obtenemos los datos del usuario de Firestore
       final Usuario? usuarioData = await _firebaseService.getUsuarioPorUid(user.uid);
 
       if (usuarioData != null) {
-        // Login completamente exitoso
         widget.onLoginSuccess("${usuarioData.nombres} ${usuarioData.apellidos}", usuarioData.rol);
         
         if (mounted) {
           Navigator.pop(context);
         }
       } else {
-        // Error: Autenticado pero sin datos en Firestore
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Error: Datos de usuario no encontrados'), backgroundColor: Colors.red),
           );
         }
-        await _firebaseService.signOut(); // Cerramos sesión para evitar inconsistencias
+        await _firebaseService.signOut();
       }
     } else {
-      // Error de autenticación (usuario o contraseña incorrectos)
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Correo o contraseña incorrectos'), backgroundColor: Colors.red),
         );
       }
     }
-    // --- FIN DE LA LÓGICA DE FIREBASE ---
 
     if (mounted) setState(() { _isLoading = false; });
   }
@@ -114,10 +122,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.black)),
                       const SizedBox(height: 30),
 
-                      // INPUT USUARIO (EMAIL)
                       TextField(
-                        controller: _emailController, // Cambiado a _emailController
-                        keyboardType: TextInputType.emailAddress, // Cambiado a tipo email
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
                         decoration: InputDecoration(
                           hintText: 'Ingrese correo electrónico',
                           prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF005696), size: 30),
@@ -126,7 +133,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 15),
 
-                      // INPUT PASSWORD
                       TextField(
                         controller: _passController,
                         obscureText: _obscureText,

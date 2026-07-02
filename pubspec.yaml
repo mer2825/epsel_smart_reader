@@ -39,7 +39,9 @@ dependencies:
   cloud_firestore: ^4.17.0            # Para guardar las lecturas en la nube
   firebase_core: ^2.32.0               # Conexión base con Firebase
   firebase_auth: ^4.20.0              # Para la autenticación de usuarios
+  firebase_storage: ^11.7.0             # Para subir las fotos de los medidores
   path_provider: ^2.1.2               # Para gestionar archivos temporales de fotos
+  connectivity_plus: ^5.0.2           # Para verificar la conexión a internet
 
 dev_dependencies:
   flutter_test:

@@ -16,7 +16,6 @@ class TomaLecturaScreen extends StatefulWidget {
 class _TomaLecturaScreenState extends State<TomaLecturaScreen> {
   final TextEditingController _lecturaController = TextEditingController();
   
-  // CAMBIO CLAVE: Ahora usamos una LISTA para guardar las rutas de las fotos
   List<String> _fotosRutas = []; 
 
   @override
@@ -57,7 +56,6 @@ class _TomaLecturaScreenState extends State<TomaLecturaScreen> {
           padding: const EdgeInsets.all(20),
           child: Column(
             children: [
-              // Banner Suministro...
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 decoration: BoxDecoration(
@@ -78,7 +76,6 @@ class _TomaLecturaScreenState extends State<TomaLecturaScreen> {
               const Text('Hoja de toma de lectura', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
               const SizedBox(height: 25),
 
-              // Campo de lectura...
               const Text('Ingrese lectura manual o por NFC', style: TextStyle(color: Color(0xFF005696), fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
               SizedBox(
@@ -100,7 +97,6 @@ class _TomaLecturaScreenState extends State<TomaLecturaScreen> {
               ),
               const SizedBox(height: 30),
 
-              // SECCIÓN FOTO DE LECTURA
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -113,13 +109,10 @@ class _TomaLecturaScreenState extends State<TomaLecturaScreen> {
                     const Text('Foto de lectura', style: TextStyle(color: Color(0xFF005696), fontWeight: FontWeight.bold)),
                     const SizedBox(height: 15),
                     
-                    // FILA DE IMÁGENES DINÁMICA
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        // Mostramos el espacio 1 (Foto o Vacío)
                         _buildPhotoBox(index: 0),
-                        // Mostramos el espacio 2 (Foto o Vacío)
                         _buildPhotoBox(index: 1),
                       ],
                     ),
@@ -130,24 +123,14 @@ class _TomaLecturaScreenState extends State<TomaLecturaScreen> {
                       children: [
                         const Text('Fecha y hora de lectura\n2026-04-28 12:45:00', style: TextStyle(fontSize: 10, color: Colors.blueGrey)),
                         
-                        // BOTÓN AGREGAR FOTO (Solo habilitado si hay menos de 2 fotos)
                         ElevatedButton.icon(
-                          onPressed: _fotosRutas.length >= 2 
-                            ? null // Se deshabilita si ya hay 2 fotos
-                            : () async {
-                                final result = await Navigator.push(
-                                  context, 
-                                  MaterialPageRoute(builder: (context) => ScannerScreen(camera: widget.camera))
-                                );
-                                
-                                if (result != null && result is Map) {
-                                  setState(() {
-                                    _lecturaController.text = result['lectura'];
-                                    // AGREGAMOS a la lista en lugar de reemplazar
-                                    _fotosRutas.add(result['fotoPath']); 
-                                  });
-                                }
-                              },
+                          onPressed: () {
+                            // --- CORRECCIÓN AQUÍ ---
+                            // Deshabilitamos la navegación directa al escáner
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Acción no disponible en este flujo.')),
+                            );
+                          },
                           icon: const Icon(Icons.camera_alt, size: 18, color: Colors.white),
                           label: const Text('Agregar foto', style: TextStyle(fontSize: 11, color: Colors.white)),
                           style: ElevatedButton.styleFrom(
@@ -161,7 +144,6 @@ class _TomaLecturaScreenState extends State<TomaLecturaScreen> {
                 ),
               ),
               
-              // Botón Guardar...
               const SizedBox(height: 20),
               Align(
                 alignment: Alignment.bottomRight,
@@ -183,9 +165,7 @@ class _TomaLecturaScreenState extends State<TomaLecturaScreen> {
     );
   }
 
-  // WIDGET MEJORADO CON BOTÓN DE ELIMINAR (LA "X")
   Widget _buildPhotoBox({required int index}) {
-    // Verificamos si existe una foto para este índice
     bool existeFoto = _fotosRutas.length > index;
 
     return Stack(
@@ -204,7 +184,6 @@ class _TomaLecturaScreenState extends State<TomaLecturaScreen> {
             ? const Icon(Icons.image, color: Colors.white, size: 50)
             : null,
         ),
-        // LA "X" PARA ELIMINAR (Solo aparece si hay foto)
         if (existeFoto)
           Positioned(
             top: 5,
@@ -212,7 +191,7 @@ class _TomaLecturaScreenState extends State<TomaLecturaScreen> {
             child: GestureDetector(
               onTap: () {
                 setState(() {
-                  _fotosRutas.removeAt(index); // Eliminamos la foto específica
+                  _fotosRutas.removeAt(index);
                 });
               },
               child: Container(
