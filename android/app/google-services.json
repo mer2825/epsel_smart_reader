@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "298974373091",
+    "project_id": "epsel-smart-reader",
+    "storage_bucket": "epsel-smart-reader.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:298974373091:android:c578ddb55eae72559591d6",
+        "android_client_info": {
+          "package_name": "com.example.epsel_smart_reader"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCJO79Tc4RkyBNXB6Qt6xhwFxs6-sQ4Q_Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
