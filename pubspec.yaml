@@ -38,6 +38,7 @@ dependencies:
   google_mlkit_text_recognition: ^0.12.0 # El motor de IA para leer los números
   cloud_firestore: ^4.17.0            # Para guardar las lecturas en la nube
   firebase_core: ^2.32.0               # Conexión base con Firebase
+  firebase_auth: ^4.20.0              # Para la autenticación de usuarios
   path_provider: ^2.1.2               # Para gestionar archivos temporales de fotos
 
 dev_dependencies:
