@@ -173,47 +173,52 @@ Firestore crea índices automáticamente para la mayoría de los campos. Para co
 
 # Diseño UX/UI y Pantallas del Sistema
 
-A continuación, se presentan los mockups clave del sistema, organizados por módulo, que ilustran la interfaz de usuario y las funcionalidades principales. Se destacan aquellos que cumplen la función de reportes.
+A continuación, se presentan los mockups de las pantallas principales del sistema, divididos en el Módulo del Jefe (Panel Web) y el Módulo del Trabajador (App Móvil).
 
 ## 1. Módulo del Jefe (Panel Web)
 
-### Reporte de Lecturas y Consumos (Panel Comercial General)
-![Panel Comercial](docs/mockups/jefe_control_comercial.png)
-_Descripción: Pantalla azul con el desglose histórico, estados de cuenta y lecturas generales de los suministros. Actúa como Reporte de lecturas y Reporte de consumos._
+### Reporte de Lecturas y Consumos
+**Pantalla:** `jefe_control_comercial.png`
+**Descripción:** Panel comercial general que muestra el historial de lecturas, estados de cuenta y deudas de los suministros.
+![Panel de Control Comercial](docs/mockups/jefe_control_comercial.png)
 
-### Reporte de Usuarios (Monitoreo de Cuadrillas Activas)
+### Reporte de Usuarios
+**Pantalla:** `jefe_monitoreo_campo.png`
+**Descripción:** Tabla de monitoreo de cuadrillas activas en campo, mostrando estado, código, nombres y localización.
 ![Monitoreo de Campo](docs/mockups/jefe_monitoreo_campo.png)
-_Descripción: Tabla de operarios activos en campo, mostrando su estado actual, código, nombres y localización. Es el reporte principal de usuarios._
 
-### Gestión de Personal (Alta de Trabajadores)
+### Gestión de Personal
+**Pantalla:** `jefe_registro_trabajador.png`
+**Descripción:** Formulario para dar de alta a nuevos trabajadores en el sistema.
 ![Registro de Trabajador](docs/mockups/jefe_registro_trabajador.png)
-_Descripción: Formulario para dar de alta a nuevos trabajadores en el sistema._
 
-### Gestión de Operaciones (Asignación de Tareas)
+### Gestión de Operaciones
+**Pantalla:** `jefe_asignacion_tareas.png`
+**Descripción:** Interfaz para la planificación y asignación de rutas de trabajo a los operarios.
 ![Asignación de Tareas](docs/mockups/jefe_asignacion_tareas.png)
-_Descripción: Interfaz para la programación de rutas y asignaciones de tareas a los trabajadores._
 
 ## 2. Módulo del Trabajador (App Móvil)
 
-### Reporte de Consumos (Historial Detallado del Suministro)
-![Historial Móvil](docs/mockups/movil_historial.png)
-_Descripción: Vista móvil del historial detallado por cliente, complementando el reporte de consumos._
+### Reporte de Alertas
+**Pantalla:** `movil_alertas.png`
+**Descripción:** Modales de advertencia e incidencias que se muestran al operario en campo.
+![Alerta en Móvil](docs/mockups/movil_alertas.png)
 
 ### Reporte de Lecturas (Evidencia de Campo)
+**Pantalla:** `movil_toma_llena.png`
+**Descripción:** Hoja de lectura con las fotos de los medidores ya cargadas, sirviendo como evidencia de la toma.
 ![Toma de Lectura Llena](docs/mockups/movil_toma_llena.png)
-_Descripción: Hoja de lectura con las fotos de los medidores cargadas, sirviendo como evidencia y parte del reporte de lecturas._
 
-### Reporte de Alertas e Incidencias
-![Alertas Móviles](docs/mockups/movil_alertas.png)
-_Descripción: Modal o aviso de "Advertencia" que funciona como registro y reporte de alertas o incidencias del sistema._
+### Reporte de Consumos (Historial en Campo)
+**Pantalla:** `movil_historial.png`
+**Descripción:** Historial detallado del suministro que el operario puede consultar en la calle.
+![Historial en Móvil](docs/mockups/movil_historial.png)
 
 ### Flujo Operativo de Captura
+**Pantallas:** `movil_toma_vacia.png` y `movil_camara.png`
+**Descripción:** Flujo de trabajo del operario, desde la hoja de lectura vacía hasta la interfaz de la cámara para capturar la foto del medidor.
 ![Toma de Lectura Vacía](docs/mockups/movil_toma_vacia.png)
-_Descripción: Hoja de lectura lista para llenar datos en campo._
-
-### Interfaz de Cámara
-![Cámara Móvil](docs/mockups/movil_camara.png)
-_Descripción: Interfaz de la cámara del celular para la captura de fotos de los medidores._
+![Cámara en Móvil](docs/mockups/movil_camara.png)
 
 ---
 
