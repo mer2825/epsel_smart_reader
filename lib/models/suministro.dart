@@ -22,16 +22,4 @@ class Suministro {
       idCliente: data['id_cliente'] ?? '',
       direccionMedidor: data['direccion_medidor'] ?? '',
       estadoMedidor: data['estado_medidor'] ?? 'Activo',
-      lecturaAnterior: (data['lectura_anterior'] ?? 0.0).toDouble(),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id_cliente': idCliente,
-      'direccion_medidor': direccionMedidor,
-      'estado_medidor': estadoMedidor,
-      'lectura_anterior': lecturaAnterior,
-    };
-  }
-}
+      lectura
