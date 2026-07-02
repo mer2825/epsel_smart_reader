@@ -283,7 +283,17 @@ Los flujos de trabajo de GitHub Actions se activarán automáticamente ante even
 
 # Plataformas Cloud y Contenedores
 
-Aquí se detallará la arquitectura en la nube en Google Cloud/Firebase, el uso de Docker y contenedores (si se planea para el backend Spring Boot o funciones de Firebase), y el proceso de despliegue.
+Para el despliegue y operación del sistema, se utilizará una arquitectura basada en Google Cloud Platform (GCP) y contenedores, aprovechando los servicios de Firebase.
+
+*   **Arquitectura en la Nube:**
+    *   **Frontend (App Móvil Flutter):** La aplicación se compila y distribuye como un paquete nativo para Android (`.apk` o `.aab`).
+    *   **Backend (API Spring Boot):** El backend se empaqueta como una imagen de **Docker**, lo que garantiza un entorno de ejecución consistente. Esta imagen se despliega en **Google Cloud Run**, un servicio sin servidor que ejecuta contenedores, escala automáticamente según la demanda y simplifica la gestión de la infraestructura.
+    *   **Base de Datos NoSQL:** Se utiliza **Firebase Firestore** para el almacenamiento de datos estructurados como usuarios, lecturas y rutas. Firestore es parte de la infraestructura de Google Cloud y ofrece sincronización en tiempo real y escalabilidad.
+    *   **Almacenamiento de Archivos:** Las imágenes de los medidores capturadas por la app se almacenan en **Google Cloud Storage**, un servicio de almacenamiento de objetos duradero y altamente disponible.
+
+*   **Contenedores y Despliegue:**
+    *   El uso de **Docker** para el backend permite que la aplicación sea portátil y se pueda desplegar en cualquier entorno que soporte contenedores.
+    *   El despliegue en **Google Cloud Run** se automatiza a través del pipeline de CI/CD (definido en la sección de Integración Continua), que construye la imagen Docker y la publica en el servicio con cada actualización.
 
 ---
 
