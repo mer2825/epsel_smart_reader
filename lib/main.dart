@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'services/firebase_service.dart'; // Importamos el servicio
 import 'screens/scanner_screen.dart'; 
 import 'screens/login_screen.dart'; 
 import 'screens/login_jefe_screen.dart';
@@ -13,11 +14,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();  
   
   try {
-    // Intentamos inicializar Firebase, pero no haremos que la app falle si no puede.
     await Firebase.initializeApp();
   } catch (e) {
     print("Firebase initialization failed: $e");
-    // La app continuará ejecutándose incluso si Firebase no está configurado.
   }
   
   final cameras = await availableCameras();
@@ -35,11 +34,11 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  final FirebaseService _firebaseService = FirebaseService(); // Creamos instancia del servicio
   bool _isLoggedIn = false;
   String _usuarioActual = ""; 
-  String _rolActual = ""; // "trabajador" o "jefe"
+  String _rolActual = "";
 
-  // Función para manejar el login desde cualquier pantalla
   void _handleLogin(String nombre, String rol) { 
     setState(() {
       _isLoggedIn = true;
@@ -48,8 +47,9 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  // Función para cerrar sesión y volver a la selección
-  void _handleLogout() {
+  // --- FUNCIÓN DE LOGOUT ACTUALIZADA ---
+  Future<void> _handleLogout() async {
+    await _firebaseService.signOut(); // Llamamos a Firebase para cerrar sesión
     setState(() {
       _isLoggedIn = false;
       _usuarioActual = "";
