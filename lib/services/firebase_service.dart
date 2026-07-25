@@ -5,14 +5,52 @@ import 'package:firebase_storage/firebase_storage.dart';
 import '../models/usuario.dart';
 import '../models/ruta_asignada.dart';
 import '../models/lectura.dart';
-import '../models/reclamacion.dart'; // Importamos el nuevo modelo
+import '../models/reclamacion.dart';
 
 class FirebaseService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  // ... (código de autenticación y usuarios existente) ...
+  Future<User?> signInWithEmailAndPassword(String email, String password) async {
+    try {
+      UserCredential result = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      return result.user;
+    } on FirebaseAuthException catch (e) {
+      print("Error de autenticación: ${e.message}");
+      return null;
+    }
+  }
+
+  Future<Usuario?> getUsuarioPorUid(String uid) async {
+    try {
+      DocumentSnapshot doc = await _db.collection('usuarios').doc(uid).get();
+      if (doc.exists) {
+        return Usuario.fromFirestore(doc);
+      }
+      return null;
+    } catch (e) {
+      print("Error al obtener usuario por UID: $e");
+      return null;
+    }
+  }
+
+  Future<List<Usuario>> getTrabajadores() async {
+    try {
+      QuerySnapshot snapshot = await _db
+          .collection('usuarios')
+          .where('rol', isEqualTo: 'trabajador')
+          .get();
+      
+      return snapshot.docs.map((doc) => Usuario.fromFirestore(doc)).toList();
+    } catch (e) {
+      print("Error al obtener trabajadores: $e");
+      return [];
+    }
+  }
 
   Future<String> registrarNuevoTrabajador({
     required String email,
@@ -20,7 +58,39 @@ class FirebaseService {
     required String nombres,
     required String apellidos,
   }) async {
-    // ... (código existente) ...
+    try {
+      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: dni,
+      );
+
+      if (userCredential.user != null) {
+        String uid = userCredential.user!.uid;
+        
+        Usuario nuevoUsuario = Usuario(
+          id: uid,
+          dni: dni,
+          nombres: nombres,
+          apellidos: apellidos,
+          rol: 'trabajador',
+        );
+
+        await _db.collection('usuarios').doc(uid).set(nuevoUsuario.toJson());
+        
+        return "¡Trabajador registrado con éxito!";
+      }
+      return "Error: No se pudo obtener el usuario creado.";
+
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'weak-password') {
+        return 'Error: La contraseña (DNI) es demasiado débil.';
+      } else if (e.code == 'email-already-in-use') {
+        return 'Error: El correo electrónico ya está en uso.';
+      }
+      return 'Error de autenticación: ${e.message}';
+    } catch (e) {
+      return 'Error inesperado: $e';
+    }
   }
 
   Future<String> asignarNuevaRuta({
@@ -28,11 +98,33 @@ class FirebaseService {
     required DateTime fechaAsignacion,
     required List<String> suministrosIds,
   }) async {
-    // ... (código existente) ...
+    try {
+      DocumentReference docRef = _db.collection('rutas_asignadas').doc();
+
+      RutaAsignada nuevaRuta = RutaAsignada(
+        idRuta: docRef.id,
+        idUsuario: idUsuario,
+        fechaAsignacion: fechaAsignacion,
+        estado: 'Pendiente',
+        suministrosIds: suministrosIds,
+      );
+
+      await docRef.set(nuevaRuta.toJson());
+
+      return "¡Ruta asignada con éxito!";
+    } catch (e) {
+      return "Error al asignar la ruta: $e";
+    }
   }
 
   Future<int> getLecturasCount() async {
-    // ... (código existente) ...
+    try {
+      AggregateQuerySnapshot snapshot = await _db.collection('lecturas').count().get();
+      return snapshot.count ?? 0;
+    } catch (e) {
+      print("Error al contar lecturas: $e");
+      return 0;
+    }
   }
 
   Future<String> guardarLectura({
@@ -41,10 +133,29 @@ class FirebaseService {
     required double lecturaActual,
     required File foto,
   }) async {
-    // ... (código existente) ...
+    try {
+      Lectura nuevaLectura = Lectura(
+        codigoSuministro: codigoSuministro,
+        idRuta: idRuta,
+        fechaLectura: DateTime.now(),
+        lecturaAnterior: 0.0,
+        lecturaActual: lecturaActual,
+        consumoCalculado: 0.0,
+        fotoUrl: '', // Dejamos la URL de la foto vacía
+        estadoLectura: 'Leído',
+        latitud: 0.0,
+        longitud: 0.0,
+      );
+
+      await _db.collection('lecturas').add(nuevaLectura.toJson());
+
+      return "Lectura guardada con éxito (sin foto)";
+    } catch (e) {
+      print("Error al guardar lectura en Firestore: $e");
+      return "Error al guardar la lectura";
+    }
   }
 
-  // --- NUEVA FUNCIÓN PARA ENVIAR RECLAMACIONES ---
   Future<String> enviarReclamacion({
     required String nombre,
     required String contacto,
@@ -72,7 +183,17 @@ class FirebaseService {
   }
 
   Future<List<RutaAsignada>> getMisRutas(String idUsuario) async {
-    // ... (código existente) ...
+    try {
+      QuerySnapshot snapshot = await _db
+          .collection('rutas_asignadas')
+          .where('id_usuario', isEqualTo: idUsuario)
+          .get();
+      
+      return snapshot.docs.map((doc) => RutaAsignada.fromFirestore(doc)).toList();
+    } catch (e) {
+      print("Error al obtener mis rutas: $e");
+      return [];
+    }
   }
 
   Future<void> signOut() async {

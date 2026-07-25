@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
-import 'login_jefe_screen.dart';
-import 'reclamaciones_screen.dart'; // Importamos la nueva pantalla
+import 'reclamaciones_screen.dart';
 
 class SelectionScreen extends StatelessWidget {
   final Function(String, String) onLogin;
@@ -27,10 +26,11 @@ class SelectionScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                const Spacer(flex: 2),
                 Image.asset("assets/images/logo_epsel.jpeg", height: 150),
                 const SizedBox(height: 20),
                 const Text(
-                  'Bienvenido a Epsel Smart Reader',
+                  'Epsel Smart Reader',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 28,
@@ -41,31 +41,20 @@ class SelectionScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 50),
                 const Text(
-                  'Seleccione su rol para continuar',
+                  'Bienvenido, inicie sesión para continuar',
                   style: TextStyle(color: Colors.white, fontSize: 18),
                 ),
                 const SizedBox(height: 30),
                 _buildRoleButton(
                   context,
-                  'Soy Trabajador',
+                  'Iniciar Sesión como Trabajador',
                   Icons.engineering,
                   () => Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => LoginScreen(onLoginSuccess: onLogin)),
                   ),
                 ),
-                const SizedBox(height: 20),
-                _buildRoleButton(
-                  context,
-                  'Soy Jefe de Zona',
-                  Icons.supervisor_account,
-                  () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => LoginJefeScreen(onLoginSuccess: onLogin)),
-                  ),
-                ),
-                const Spacer(),
-                // --- BOTÓN LIBRO DE RECLAMACIONES ---
+                const Spacer(flex: 3),
                 TextButton.icon(
                   onPressed: () {
                     Navigator.push(
