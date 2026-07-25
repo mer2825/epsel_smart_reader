@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
-import 'reclamaciones_screen.dart';
+import 'libro_reclamaciones_screen.dart'; // CORRECCIÓN: Importamos la nueva pantalla
 
 class SelectionScreen extends StatelessWidget {
   final Function(String, String) onLogin;
@@ -59,7 +59,8 @@ class SelectionScreen extends StatelessWidget {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const ReclamacionesScreen()),
+                      // CORRECCIÓN: Navegamos a la nueva pantalla
+                      MaterialPageRoute(builder: (context) => const LibroReclamacionesScreen()),
                     );
                   },
                   icon: const Icon(Icons.menu_book, color: Colors.white),

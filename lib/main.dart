@@ -7,7 +7,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'services/firebase_service.dart';
 import 'models/ruta_asignada.dart';
-import 'screens/scanner_screen.dart'; 
+import 'screens/scanner_screen.dart';
 import 'screens/login_screen.dart'; 
 import 'screens/login_jefe_screen.dart';
 import 'screens/historial_lectura_screen.dart';
@@ -45,7 +45,7 @@ class _MyAppState extends State<MyApp> {
   final FirebaseService _firebaseService = FirebaseService();
   late StreamSubscription<User?> _authSubscription;
   bool _isLoggedIn = false;
-  String _usuarioActual = ""; 
+  String _usuarioActual = "";
   String _rolActual = "";
 
   @override
@@ -77,7 +77,7 @@ class _MyAppState extends State<MyApp> {
     super.dispose();
   }
 
-  void _handleLogin(String nombre, String rol) { 
+  void _handleLogin(String nombre, String rol) {
     setState(() {
       _isLoggedIn = true;
       _usuarioActual = nombre;
@@ -133,7 +133,7 @@ class HomePage extends StatefulWidget {
   const HomePage({
     super.key, 
     required this.camera, 
-    required this.nombreUsuario, 
+    required this.nombreUsuario,
     required this.onLogout
   });
 

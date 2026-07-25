@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/firebase_service.dart';
 import '../models/usuario.dart';
+import 'libro_reclamaciones_screen.dart'; // Importamos la nueva pantalla
 
 class LoginJefeScreen extends StatefulWidget {
   final Function(String, String) onLoginSuccess;
@@ -33,18 +34,15 @@ class _LoginJefeScreenState extends State<LoginJefeScreen> {
       return;
     }
 
-    // --- LÓGICA REAL DE FIREBASE AUTH ---
     final User? user = await _firebaseService.signInWithEmailAndPassword(email, password);
 
     if (user != null) {
       final Usuario? usuarioData = await _firebaseService.getUsuarioPorUid(user.uid);
 
       if (usuarioData != null) {
-        // VERIFICAMOS QUE EL ROL SEA 'JEFE'
         if (usuarioData.rol == 'jefe') {
           widget.onLoginSuccess("${usuarioData.nombres} ${usuarioData.apellidos}", usuarioData.rol);
         } else {
-          // Si el usuario no es jefe, mostramos error y cerramos sesión
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Acceso denegado. No tienes rol de Jefe.'), backgroundColor: Colors.red),
@@ -129,6 +127,19 @@ class _LoginJefeScreenState extends State<LoginJefeScreen> {
                     ),
                   ),
                 ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LibroReclamacionesScreen()),
+                );
+              },
+              child: const Text(
+                'Libro de Reclamaciones',
+                style: TextStyle(color: Colors.white70, decoration: TextDecoration.underline),
               ),
             ),
           ],

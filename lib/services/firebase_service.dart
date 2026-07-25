@@ -5,13 +5,14 @@ import 'package:firebase_storage/firebase_storage.dart';
 import '../models/usuario.dart';
 import '../models/ruta_asignada.dart';
 import '../models/lectura.dart';
-import '../models/reclamacion.dart';
+import '../models/reclamo.dart';
 
 class FirebaseService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
+  // ... (otras funciones)
   Future<User?> signInWithEmailAndPassword(String email, String password) async {
     try {
       UserCredential result = await _auth.signInWithEmailAndPassword(
@@ -141,7 +142,7 @@ class FirebaseService {
         lecturaAnterior: 0.0,
         lecturaActual: lecturaActual,
         consumoCalculado: 0.0,
-        fotoUrl: '', // Dejamos la URL de la foto vacía
+        fotoUrl: '',
         estadoLectura: 'Leído',
         latitud: 0.0,
         longitud: 0.0,
@@ -153,32 +154,6 @@ class FirebaseService {
     } catch (e) {
       print("Error al guardar lectura en Firestore: $e");
       return "Error al guardar la lectura";
-    }
-  }
-
-  Future<String> enviarReclamacion({
-    required String nombre,
-    required String contacto,
-    required String tipo,
-    required String detalle,
-  }) async {
-    try {
-      DocumentReference docRef = _db.collection('reclamaciones').doc();
-      
-      Reclamacion nuevaReclamacion = Reclamacion(
-        id: docRef.id,
-        nombreCompleto: nombre,
-        contacto: contacto,
-        tipo: tipo,
-        detalle: detalle,
-        fecha: DateTime.now(),
-      );
-
-      await docRef.set(nuevaReclamacion.toJson());
-      return "Reclamación enviada con éxito.";
-    } catch (e) {
-      print("Error al enviar reclamación: $e");
-      return "Error al enviar la reclamación. Intente de nuevo.";
     }
   }
 
@@ -194,6 +169,37 @@ class FirebaseService {
       print("Error al obtener mis rutas: $e");
       return [];
     }
+  }
+
+  Future<String> guardarReclamo(Reclamo reclamo) async {
+    try {
+      await _db.collection('reclamos').doc(reclamo.id).set(reclamo.toJson());
+      return "Reclamo enviado con éxito. Su código de seguimiento es: ${reclamo.id}";
+    } catch (e) {
+      print("Error al guardar reclamo: $e");
+      return "Error al enviar el reclamo. Por favor, intente de nuevo.";
+    }
+  }
+
+  Future<List<Reclamo>> getReclamos() async {
+    try {
+      QuerySnapshot snapshot = await _db.collection('reclamos').orderBy('fecha', descending: true).get();
+      return snapshot.docs.map((doc) => Reclamo.fromFirestore(doc)).toList();
+    } catch (e) {
+      print("Error al obtener reclamos: $e");
+      return [];
+    }
+  }
+
+  // --- NUEVAS FUNCIONES STREAM ---
+  Stream<List<Reclamo>> getReclamosStream() {
+    return _db.collection('reclamos').orderBy('fecha', descending: true).snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) => Reclamo.fromFirestore(doc)).toList();
+    });
+  }
+
+  Stream<int> getReclamosCountStream() {
+    return _db.collection('reclamos').snapshots().map((snapshot) => snapshot.size);
   }
 
   Future<void> signOut() async {

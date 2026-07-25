@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart'; // Paquete para formatear fechas
 import '../models/reclamacion.dart';
 
 class VistaReclamacionesScreen extends StatelessWidget {
@@ -23,49 +24,104 @@ class VistaReclamacionesScreen extends StatelessWidget {
           }
 
           return ListView.builder(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(15),
             itemCount: snapshot.data!.docs.length,
             itemBuilder: (context, index) {
               final doc = snapshot.data!.docs[index];
-              final data = doc.data() as Map<String, dynamic>;
-              
-              final reclamacion = Reclamacion(
-                id: doc.id,
-                nombreCompleto: data['nombre_completo'],
-                contacto: data['contacto'],
-                tipo: data['tipo'],
-                detalle: data['detalle'],
-                fecha: (data['fecha'] as Timestamp).toDate(),
-                estado: data['estado'],
-              );
+              final reclamacion = Reclamacion.fromFirestore(doc);
 
-              return Card(
-                margin: const EdgeInsets.only(bottom: 10),
-                elevation: 3,
-                child: ListTile(
-                  isThreeLine: true,
-                  leading: CircleAvatar(
-                    backgroundColor: reclamacion.tipo == 'Reclamo' ? Colors.red.shade100 : Colors.amber.shade100,
-                    child: Icon(
-                      reclamacion.tipo == 'Reclamo' ? Icons.gavel : Icons.comment,
-                      color: reclamacion.tipo == 'Reclamo' ? Colors.red : Colors.amber.shade800,
-                    ),
-                  ),
-                  title: Text(reclamacion.nombreCompleto, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text(
-                    '${reclamacion.tipo}: ${reclamacion.detalle}',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  trailing: Chip(
-                    label: Text(reclamacion.estado),
-                    backgroundColor: reclamacion.estado == 'Recibido' ? Colors.blue.shade100 : Colors.green.shade100,
-                  ),
-                ),
-              );
+              return _buildReclamacionCard(reclamacion);
             },
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildReclamacionCard(Reclamacion reclamacion) {
+    final DateFormat formatter = DateFormat('dd/MM/yyyy HH:mm');
+    final String fechaFormateada = formatter.format(reclamacion.fecha);
+
+    IconData tipoIcon;
+    Color tipoColor;
+    switch (reclamacion.tipo) {
+      case 'Reclamo':
+        tipoIcon = Icons.gavel;
+        tipoColor = Colors.red.shade700;
+        break;
+      case 'Queja':
+      default:
+        tipoIcon = Icons.comment_bank;
+        tipoColor = Colors.amber.shade800;
+        break;
+    }
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 15),
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: BorderSide(color: Colors.grey.shade300),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(15.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // --- Cabecera con Nombre, Origen y Fecha ---
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Flexible(
+                  child: Text(
+                    reclamacion.nombreCompleto,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Chip(
+                  label: Text(reclamacion.estado, style: const TextStyle(fontSize: 10)),
+                  backgroundColor: reclamacion.estado == 'Recibido' ? Colors.blue.shade100 : Colors.green.shade100,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                ),
+              ],
+            ),
+            Text(
+              'Origen: ${reclamacion.origen}',
+              style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              'Fecha: $fechaFormateada',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            ),
+            const Divider(height: 20),
+
+            // --- Cuerpo del Reclamo ---
+            Row(
+              children: [
+                Icon(tipoIcon, color: tipoColor, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  reclamacion.tipo.toUpperCase(),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: tipoColor),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(reclamacion.detalle),
+            const Divider(height: 20),
+
+            // --- Pie con Contacto ---
+            Row(
+              children: [
+                const Icon(Icons.contact_mail, size: 16, color: Colors.grey),
+                const SizedBox(width: 8),
+                Text('Contacto: ${reclamacion.contacto}'),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

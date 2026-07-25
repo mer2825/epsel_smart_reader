@@ -3,7 +3,7 @@ import '../services/firebase_service.dart';
 import '../models/usuario.dart';
 import 'control_comercial_screen.dart';
 import 'monitoreo_campo_screen.dart';
-import 'vista_reclamaciones_screen.dart'; // Importamos la nueva pantalla
+import 'panel_reclamaciones_screen.dart';
 
 class DashboardJefeScreen extends StatefulWidget {
   final VoidCallback onLogout;
@@ -16,15 +16,20 @@ class DashboardJefeScreen extends StatefulWidget {
 
 class _DashboardJefeScreenState extends State<DashboardJefeScreen> {
   final FirebaseService _firebaseService = FirebaseService();
-  late Future<Map<String, dynamic>> _dashboardDataFuture;
+  
+  // Mantenemos los datos que no necesitan ser en tiempo real en un Future
+  late Future<Map<String, dynamic>> _staticDataFuture;
+  // Creamos un Stream para los datos que sí son en tiempo real
+  late Stream<int> _reclamosCountStream;
 
   @override
   void initState() {
     super.initState();
-    _dashboardDataFuture = _loadDashboardData();
+    _staticDataFuture = _loadStaticData();
+    _reclamosCountStream = _firebaseService.getReclamosCountStream();
   }
 
-  Future<Map<String, dynamic>> _loadDashboardData() async {
+  Future<Map<String, dynamic>> _loadStaticData() async {
     final results = await Future.wait([
       _firebaseService.getTrabajadores(),
       _firebaseService.getLecturasCount(),
@@ -52,7 +57,7 @@ class _DashboardJefeScreenState extends State<DashboardJefeScreen> {
         ],
       ),
       body: FutureBuilder<Map<String, dynamic>>(
-        future: _dashboardDataFuture,
+        future: _staticDataFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -63,6 +68,7 @@ class _DashboardJefeScreenState extends State<DashboardJefeScreen> {
           
           final List<Usuario> trabajadores = snapshot.data?['trabajadores'] ?? [];
           final int lecturasCount = snapshot.data?['lecturasCount'] ?? 0;
+          
           final String numeroDeTecnicos = trabajadores.length.toString();
           final String numeroDeLecturas = lecturasCount.toString();
 
@@ -92,7 +98,27 @@ class _DashboardJefeScreenState extends State<DashboardJefeScreen> {
                       ),
                     ),
                     const SizedBox(width: 15),
-                    Expanded(child: _buildStatCardContent("Alertas", "12", Colors.red, Icons.warning_amber)),
+                    // --- WIDGET DE RECLAMACIONES EN TIEMPO REAL ---
+                    Expanded(
+                      child: StreamBuilder<int>(
+                        stream: _reclamosCountStream,
+                        builder: (context, streamSnapshot) {
+                          final numeroDeReclamos = streamSnapshot.data?.toString() ?? '...';
+                          return _HoverableStatCard(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const PanelReclamacionesScreen()),
+                              );
+                            },
+                            label: "Reclamaciones",
+                            value: numeroDeReclamos,
+                            color: Colors.orange,
+                            icon: Icons.menu_book,
+                          );
+                        },
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 15),
@@ -113,21 +139,7 @@ class _DashboardJefeScreenState extends State<DashboardJefeScreen> {
                       ),
                     ),
                     const SizedBox(width: 15),
-                    // --- TARJETA DE RECLAMACIONES ---
-                    Expanded(
-                      child: _HoverableStatCard(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const VistaReclamacionesScreen()),
-                          );
-                        },
-                        label: "Reclamaciones",
-                        value: "N/A", // Podríamos contar las pendientes
-                        color: Colors.orange,
-                        icon: Icons.menu_book,
-                      ),
-                    ),
+                    Expanded(child: _buildStatCardContent("Avance", "65%", Colors.purple, Icons.trending_up)),
                   ],
                 ),
 
