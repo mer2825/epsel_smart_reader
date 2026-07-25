@@ -1,3 +1,8 @@
+// =================================================================
+//  EPSEL SMART READER - APLICACIÓN DE LECTURA DE MEDIDORES
+//  Versión: 1.0.0 - Desarrollo Final
+//
+
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
