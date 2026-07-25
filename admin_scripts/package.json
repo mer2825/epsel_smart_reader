@@ -1,0 +1,13 @@
+{
+  "name": "admin-scripts",
+  "version": "1.0.0",
+  "description": "Scripts para administrar el backend de Epsel Smart Reader",
+  "main": "seed_database.js",
+  "type": "module",
+  "scripts": {
+    "seed": "node seed_database.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  }
+}

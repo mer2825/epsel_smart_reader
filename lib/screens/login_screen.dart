@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-// import '../services/firebase_service.dart'; // Comentado temporalmente
-// import '../models/usuario.dart'; // Comentado temporalmente
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:connectivity_plus/connectivity_plus.dart'; // Importamos el paquete
+import '../services/firebase_service.dart';
+import '../models/usuario.dart';
 
 class LoginScreen extends StatefulWidget {
-  final Function(String, String) onLoginSuccess; // Mantenemos la firma
+  final Function(String, String) onLoginSuccess;
   const LoginScreen({super.key, required this.onLoginSuccess});
 
   @override
@@ -11,39 +13,68 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _usuarioController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passController = TextEditingController();
-  // final _firebaseService = FirebaseService(); // Comentado temporalmente
+  final _firebaseService = FirebaseService();
 
   bool _isLoading = false;
   bool _obscureText = true;
 
   Future<void> _handleLogin() async {
     setState(() { _isLoading = true; });
-    
-    // --- SIMULACIÓN DE LOGIN ---
-    await Future.delayed(const Duration(seconds: 1)); // Simula espera de red
-    
-    final dniStr = _usuarioController.text.trim();
 
-    if (dniStr == '123') {
-      // Login simulado exitoso
-      widget.onLoginSuccess("Usuario de Prueba", "trabajador");
-      
-      // ¡SOLUCIÓN! Cierra la pantalla de login después del éxito.
-      if (mounted) {
-        Navigator.pop(context);
-      }
-
-    } else {
-      // Login simulado fallido
+    // --- VERIFICACIÓN DE CONEXIÓN A INTERNET ---
+    final connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.none) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Usuario no encontrado (Prueba con DNI "123")'), backgroundColor: Colors.red),
+          const SnackBar(content: Text('No hay conexión a internet'), backgroundColor: Colors.red),
+        );
+      }
+      setState(() { _isLoading = false; });
+      return;
+    }
+    // --- FIN DE LA VERIFICACIÓN ---
+
+    final email = _emailController.text.trim();
+    final password = _passController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Por favor, ingrese correo y contraseña'), backgroundColor: Colors.orange),
+        );
+      }
+      setState(() { _isLoading = false; });
+      return;
+    }
+
+    final User? user = await _firebaseService.signInWithEmailAndPassword(email, password);
+
+    if (user != null) {
+      final Usuario? usuarioData = await _firebaseService.getUsuarioPorUid(user.uid);
+
+      if (usuarioData != null) {
+        widget.onLoginSuccess("${usuarioData.nombres} ${usuarioData.apellidos}", usuarioData.rol);
+        
+        if (mounted) {
+          Navigator.pop(context);
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Error: Datos de usuario no encontrados'), backgroundColor: Colors.red),
+          );
+        }
+        await _firebaseService.signOut();
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Correo o contraseña incorrectos'), backgroundColor: Colors.red),
         );
       }
     }
-    // --- FIN DE LA SIMULACIÓN ---
 
     if (mounted) setState(() { _isLoading = false; });
   }
@@ -54,7 +85,6 @@ class _LoginScreenState extends State<LoginScreen> {
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // 1. FONDO DE AGUA (.JPEG)
           Container(
             width: double.infinity,
             height: double.infinity,
@@ -65,8 +95,6 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
-
-          // 2. CONTENEDOR BLANCO (ESTILO FIGMA)
           Align(
             alignment: Alignment.center,
             child: SingleChildScrollView(
@@ -88,33 +116,29 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // LOGO EPSEL (.JPEG)
                       Image.asset("assets/images/logo_epsel.jpeg", height: 140),
                       const SizedBox(height: 10),
                       const Text('Epsel S.A.', 
                         style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.black)),
                       const SizedBox(height: 30),
 
-                      // INPUT USUARIO (DNI)
                       TextField(
-                        controller: _usuarioController,
-                        keyboardType: TextInputType.number,
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
                         decoration: InputDecoration(
-                          hintText: 'Ingrese usuario (DNI)',
-                          prefixIcon: const Icon(Icons.account_circle_outlined, color: Color(0xFF005696), size: 30),
+                          hintText: 'Ingrese correo electrónico',
+                          prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF005696), size: 30),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
                         ),
                       ),
                       const SizedBox(height: 15),
 
-                      // INPUT PASSWORD CON FUNCIÓN DE VER CONTRASEÑA
                       TextField(
                         controller: _passController,
-                        obscureText: _obscureText, // Aplica el estado
+                        obscureText: _obscureText,
                         decoration: InputDecoration(
                           hintText: 'Ingrese contraseña',
                           prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF005696), size: 30),
-                          // BOTÓN INTERACTIVO DEL OJO
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscureText ? Icons.visibility_off : Icons.visibility,
@@ -132,7 +156,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       const SizedBox(height: 10),
 
-                      // BOTÓN CELESTE FIGMA
                       _isLoading 
                         ? const CircularProgressIndicator()
                         : ElevatedButton(

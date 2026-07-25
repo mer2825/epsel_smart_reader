@@ -1,3 +1,15 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.android.tools.build:gradle:8.1.1") // Asegúrate de que esta versión coincida con la que ya tienes si es diferente
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.0") // Asegúrate de que esta versión coincida con la que ya tienes si es diferente
+        classpath("com.google.gms:google-services:4.4.1") // ¡Esta es la línea que añadimos para Firebase!
+    }
+}
+
 allprojects {
     repositories {
         google()

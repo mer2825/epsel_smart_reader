@@ -1,33 +1,45 @@
+// =================================================================
+//  EPSEL SMART READER - APLICACIÓN DE LECTURA DE MEDIDORES
+//  Versión: 1.0.0 - Desarrollo Final
+//
+
+import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'screens/scanner_screen.dart'; 
+import 'firebase_options.dart';
+import 'services/firebase_service.dart';
+import 'models/ruta_asignada.dart';
+import 'screens/scanner_screen.dart';
 import 'screens/login_screen.dart'; 
 import 'screens/login_jefe_screen.dart';
 import 'screens/historial_lectura_screen.dart';
 import 'screens/perfil_screen.dart';
 import 'screens/selection_screen.dart';
 import 'screens/dashboard_jefe_screen.dart';
+import 'screens/ruta_detalle_screen.dart';
+
+CameraDescription? firstCamera;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();  
   
-  try {
-    // Intentamos inicializar Firebase, pero no haremos que la app falle si no puede.
-    await Firebase.initializeApp();
-  } catch (e) {
-    print("Firebase initialization failed: $e");
-    // La app continuará ejecutándose incluso si Firebase no está configurado.
-  }
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   
-  final cameras = await availableCameras();
-  final firstCamera = cameras.first;
+  if (!kIsWeb) {
+    final cameras = await availableCameras();
+    firstCamera = cameras.first;
+  }
 
   runApp(MyApp(camera: firstCamera));
 }
 
 class MyApp extends StatefulWidget {
-  final CameraDescription camera;
+  final CameraDescription? camera;
   const MyApp({super.key, required this.camera});
 
   @override
@@ -35,12 +47,42 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  final FirebaseService _firebaseService = FirebaseService();
+  late StreamSubscription<User?> _authSubscription;
   bool _isLoggedIn = false;
-  String _usuarioActual = ""; 
-  String _rolActual = ""; // "trabajador" o "jefe"
+  String _usuarioActual = "";
+  String _rolActual = "";
 
-  // Función para manejar el login desde cualquier pantalla
-  void _handleLogin(String nombre, String rol) { 
+  @override
+  void initState() {
+    super.initState();
+    _authSubscription = FirebaseAuth.instance.authStateChanges().listen((User? user) {
+      if (user == null) {
+        setState(() {
+          _isLoggedIn = false;
+          _usuarioActual = "";
+          _rolActual = "";
+        });
+      } else {
+        _firebaseService.getUsuarioPorUid(user.uid).then((usuarioData) {
+          if (usuarioData != null) {
+            _handleLogin(
+              "${usuarioData.nombres} ${usuarioData.apellidos}",
+              usuarioData.rol,
+            );
+          }
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _authSubscription.cancel();
+    super.dispose();
+  }
+
+  void _handleLogin(String nombre, String rol) {
     setState(() {
       _isLoggedIn = true;
       _usuarioActual = nombre;
@@ -48,13 +90,8 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  // Función para cerrar sesión y volver a la selección
-  void _handleLogout() {
-    setState(() {
-      _isLoggedIn = false;
-      _usuarioActual = "";
-      _rolActual = "";
-    });
+  Future<void> _handleLogout() async {
+    await _firebaseService.signOut();
   }
 
   @override
@@ -66,20 +103,33 @@ class _MyAppState extends State<MyApp> {
         primaryColor: const Color(0xFF005696),
         useMaterial3: true,
       ),
-      home: _isLoggedIn 
-          ? (_rolActual == "jefe" 
-              ? DashboardJefeScreen(onLogout: _handleLogout)
-              : HomePage(
-                  camera: widget.camera, 
-                  nombreUsuario: _usuarioActual, 
-                  onLogout: _handleLogout,
-                )) 
-          : SelectionScreen(onLogin: _handleLogin),
+      home: _buildHome(),
     );
+  }
+
+  Widget _buildHome() {
+    if (kIsWeb) {
+      if (_isLoggedIn && _rolActual == 'jefe') {
+        return DashboardJefeScreen(onLogout: _handleLogout);
+      } else {
+        return LoginJefeScreen(onLoginSuccess: _handleLogin);
+      }
+    } else {
+      if (_isLoggedIn) {
+        return _rolActual == 'jefe'
+            ? DashboardJefeScreen(onLogout: _handleLogout)
+            : HomePage(
+                camera: widget.camera!,
+                nombreUsuario: _usuarioActual,
+                onLogout: _handleLogout,
+              );
+      } else {
+        return SelectionScreen(onLogin: _handleLogin);
+      }
+    }
   }
 }
 
-// --- PANTALLA PRINCIPAL PARA TRABAJADORES ---
 class HomePage extends StatefulWidget {
   final CameraDescription camera;
   final String nombreUsuario;
@@ -88,7 +138,7 @@ class HomePage extends StatefulWidget {
   const HomePage({
     super.key, 
     required this.camera, 
-    required this.nombreUsuario, 
+    required this.nombreUsuario,
     required this.onLogout
   });
 
@@ -97,7 +147,20 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  final FirebaseService _firebaseService = FirebaseService();
+  late Future<List<RutaAsignada>> _misRutasFuture;
   int _selectedIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      _misRutasFuture = _firebaseService.getMisRutas(user.uid);
+    } else {
+      _misRutasFuture = Future.value([]);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -133,28 +196,61 @@ class _HomePageState extends State<HomePage> {
           _buildHeader(),
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 20.0),
-            child: Text('Hoy', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            child: Text('Mis Tareas Asignadas', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           ),
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(15),
-              children: [
-                GestureDetector(
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => HistorialLecturaScreen(camera: widget.camera))),
-                  child: _buildTaskItem("Tienes una tarea asignada", "23/09/2024 21:00", "No leído", Colors.orange),
-                ),
-                _buildTaskItem("Tienes una nueva tarea", "22/09/2024 8:00", "Leído", Colors.green),
-                _buildTaskItem("Revisión de una lectura atípica", "21/09/2024 10:00", "Leído", Colors.green),
-              ],
+            child: FutureBuilder<List<RutaAsignada>>(
+              future: _misRutasFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return const Center(child: Text("Error al cargar las tareas"));
+                }
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(child: Text("No tienes tareas asignadas"));
+                }
+
+                final rutas = snapshot.data!;
+                return ListView.builder(
+                  padding: const EdgeInsets.all(15),
+                  itemCount: rutas.length,
+                  itemBuilder: (context, index) {
+                    final ruta = rutas[index];
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => RutaDetalleScreen(ruta: ruta)),
+                        );
+                      },
+                      child: _buildTaskItem(
+                        "Ruta con ${ruta.suministrosIds.length} suministros",
+                        "Asignada: ${ruta.fechaAsignacion.toLocal().toString().split(' ')[0]}",
+                        ruta.estado,
+                        ruta.estado == 'Pendiente' ? Colors.orange : Colors.green,
+                      ),
+                    );
+                  },
+                );
+              },
             ),
           ),
         ],
       ),
       bottomNavigationBar: _buildBottomNavbar(),
+      // --- BOTÓN FLOTANTE CORREGIDO ---
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFF005696),
         shape: const CircleBorder(),
-        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ScannerScreen(camera: widget.camera))),
+        onPressed: () {
+          // Deshabilitado temporalmente para evitar errores.
+          // El flujo correcto es a través de la lista de tareas.
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Seleccione una tarea de la lista para empezar a escanear.')),
+          );
+        },
         child: const Icon(Icons.qr_code_scanner, color: Colors.white, size: 30),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.miniEndFloat,
@@ -167,7 +263,7 @@ class _HomePageState extends State<HomePage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text('Notificaciones', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          Text('Bienvenido, ${widget.nombreUsuario}', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
           Stack(
             children: [
               const Icon(Icons.notifications_none_outlined, size: 35, color: Color(0xFF005696)),
@@ -267,7 +363,6 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-// --- CLASE PARA EL DASHBOARD DEL JEFE (PENDIENTE DISEÑO) ---
 class PlaceholderDashboardJefe extends StatelessWidget {
   const PlaceholderDashboardJefe({super.key});
 
@@ -291,7 +386,6 @@ class PlaceholderDashboardJefe extends StatelessWidget {
             const SizedBox(height: 40),
             ElevatedButton(
               onPressed: () {
-                // Simulación de logout para volver a la selección
                 Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute(builder: (context) => MyApp(camera: (context.findAncestorWidgetOfExactType<MyApp>()!).camera)),
                   (route) => false
