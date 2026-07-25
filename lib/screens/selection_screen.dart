@@ -1,97 +1,104 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
 import 'login_jefe_screen.dart';
+import 'reclamaciones_screen.dart'; // Importamos la nueva pantalla
 
 class SelectionScreen extends StatelessWidget {
-  final Function(String, String) onLogin; // Para pasar nombre y rol al main
-
+  final Function(String, String) onLogin;
   const SelectionScreen({super.key, required this.onLogin});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF005696), Color(0xFF002B49)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+      body: Stack(
+        children: [
+          Container(
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage("assets/images/fondo_agua.jpeg"),
+                fit: BoxFit.cover,
+              ),
+            ),
           ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // LOGO
-            Image.asset('assets/images/logo_epsel.jpeg', height: 120),
-            const SizedBox(height: 50),
-            const Text(
-              "SISTEMA DE GESTIÓN",
-              style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: 1.5),
-            ),
-            const SizedBox(height: 10),
-            const Text("Seleccione su rol para ingresar", style: TextStyle(color: Colors.white70)),
-            const SizedBox(height: 60),
-
-            // BOTÓN TRABAJADOR
-            _buildRoleButton(
-              context,
-              label: "PERSONAL TÉCNICO",
-              icon: Icons.engineering,
-              color: Colors.white,
-              textColor: const Color(0xFF005696),
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => LoginScreen(
-                    onLoginSuccess: (nombre, rol) => onLogin(nombre, rol),
+          Container(
+            color: const Color(0xFF005696).withOpacity(0.7),
+          ),
+          SafeArea(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset("assets/images/logo_epsel.jpeg", height: 150),
+                const SizedBox(height: 20),
+                const Text(
+                  'Bienvenido a Epsel Smart Reader',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    shadows: [Shadow(blurRadius: 10.0, color: Colors.black)],
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 50),
+                const Text(
+                  'Seleccione su rol para continuar',
+                  style: TextStyle(color: Colors.white, fontSize: 18),
+                ),
+                const SizedBox(height: 30),
+                _buildRoleButton(
+                  context,
+                  'Soy Trabajador',
+                  Icons.engineering,
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginScreen(onLoginSuccess: onLogin)),
                   ),
                 ),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // BOTÓN JEFE
-            _buildRoleButton(
-              context,
-              label: "JEFATURA DE ZONA",
-              icon: Icons.admin_panel_settings,
-              color: const Color(0xFFFFD700), // Dorado
-              textColor: const Color(0xFF002B49),
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => LoginJefeScreen(
-                    onLoginSuccess: (nombre, rol) => onLogin(nombre, rol),
+                const SizedBox(height: 20),
+                _buildRoleButton(
+                  context,
+                  'Soy Jefe de Zona',
+                  Icons.supervisor_account,
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginJefeScreen(onLoginSuccess: onLogin)),
                   ),
                 ),
-              ),
+                const Spacer(),
+                // --- BOTÓN LIBRO DE RECLAMACIONES ---
+                TextButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const ReclamacionesScreen()),
+                    );
+                  },
+                  icon: const Icon(Icons.menu_book, color: Colors.white),
+                  label: const Text(
+                    'Libro de Reclamaciones',
+                    style: TextStyle(color: Colors.white, decoration: TextDecoration.underline),
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildRoleButton(BuildContext context, {
-    required String label,
-    required IconData icon,
-    required Color color,
-    required Color textColor,
-    required VoidCallback onTap,
-  }) {
-    return SizedBox(
-      width: 280,
-      height: 60,
-      child: ElevatedButton.icon(
-        onPressed: onTap,
-        icon: Icon(icon, color: textColor),
-        label: Text(label, style: TextStyle(color: textColor, fontWeight: FontWeight.bold)),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-          elevation: 5,
+  Widget _buildRoleButton(BuildContext context, String title, IconData icon, VoidCallback onPressed) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 28),
+      label: Text(title, style: const TextStyle(fontSize: 18)),
+      style: ElevatedButton.styleFrom(
+        minimumSize: const Size(300, 60),
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF005696),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30),
         ),
       ),
     );
