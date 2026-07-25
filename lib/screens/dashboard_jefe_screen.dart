@@ -3,6 +3,7 @@ import '../services/firebase_service.dart';
 import '../models/usuario.dart';
 import 'control_comercial_screen.dart';
 import 'monitoreo_campo_screen.dart';
+import 'vista_reclamaciones_screen.dart'; // Importamos la nueva pantalla
 
 class DashboardJefeScreen extends StatefulWidget {
   final VoidCallback onLogout;
@@ -85,7 +86,7 @@ class _DashboardJefeScreenState extends State<DashboardJefeScreen> {
                           );
                         },
                         label: "Lecturas",
-                        value: numeroDeLecturas, // DATO REAL
+                        value: numeroDeLecturas,
                         color: Colors.blue,
                         icon: Icons.speed,
                       ),
@@ -112,7 +113,21 @@ class _DashboardJefeScreenState extends State<DashboardJefeScreen> {
                       ),
                     ),
                     const SizedBox(width: 15),
-                    Expanded(child: _buildStatCardContent("Avance", "65%", Colors.orange, Icons.trending_up)),
+                    // --- TARJETA DE RECLAMACIONES ---
+                    Expanded(
+                      child: _HoverableStatCard(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const VistaReclamacionesScreen()),
+                          );
+                        },
+                        label: "Reclamaciones",
+                        value: "N/A", // Podríamos contar las pendientes
+                        color: Colors.orange,
+                        icon: Icons.menu_book,
+                      ),
+                    ),
                   ],
                 ),
 
